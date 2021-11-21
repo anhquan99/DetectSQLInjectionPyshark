@@ -32,6 +32,8 @@ class requestIP:
         self.attempt = 1
         self.fail = 0
         self.startTime = ''
+        self.succedTime = ''
+        self.succedAttempt = 0
 def extractedData_sort(t):
     return t[0]
 def myPrint(t):
@@ -64,10 +66,14 @@ def isSqlInjection(data):
         if result != None:
             return True
     return False
+def writeLog(data):
+    log = open('log.txt','a')
+    log.write(data)
+    log.write('\n')
+    log.close()
 def analyze():
-    try:
-        with open('ResultDirectCapture.csv', newline='', encoding='UTF8') as csvfile:
-            extractedData = []
+    with open('ResultDirectCapture.csv', newline='', encoding='UTF8') as csvfile:
+        try:
             suspectIP = []
             identifiedIP = []
             global stop_threads
@@ -77,62 +83,86 @@ def analyze():
                     time.sleep(0.5) 
                 else:
                     if len(row) > 5 and row[5].lower() == "http":
-                        extractedData.append(row)
-                    for i in extractedData:
-                        srcIP = i[1]
-                        srcPort = i[3]
+                        srcIP = row[2]
+                        srcPort = row[3]
 
-                        destIP = i[2]
-                        destPort = i[4]
+                        destIP = row[1]
+                        destPort = row[4]
                         
-                        newTime = i[0]
+                        newTime = row[0].split(' ')
+                        newTime = ' '.join(newTime[0:4]).replace(',', '')
 
-                        message = i[len(i)-1].split("\\n")
+                        message = row[len(row)-1].split("\\n")
                         tempData = findSuspect(srcIP, destIP, suspectIP) 
                         detectedData = findSuspect(srcIP, destIP, identifiedIP)  
-                        filteredMessage = [ s for s in message if "Cookie: " in s]
+                        filteredPostForm = [ s for s in message if "POST /navigate/login.php HTTP/1.1" in s]
                         # attacker tan cong 
-                        if destPort == '80' and detectedData is None:
+                        if destPort == '80' and detectedData is None and len(filteredPostForm) > 0:
+                            filteredMessage = [ s for s in message if "Cookie: navigate-user=" in s]
                             if tempData is None and len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
                                 tempRequest = requestIP()
                                 tempRequest.srcIP = srcIP
                                 tempRequest.destIP = destIP
                                 tempRequest.startTime = newTime
                                 suspectIP.append(tempRequest)
+                                resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempRequest.attempt} stared at {tempRequest.startTime}"
+                                writeLog(resultStr)
+                                print(resultStr)
+
                             elif len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
                                 tempData.attempt += 1
+                                resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempData.attempt}, fail {detectedData.fail} time(s) stared at {tempData.startTime}"
+                                writeLog(resultStr)
+                                print(resultStr)
+                        
+                        elif destPort == '80' and detectedData is not None and len(filteredPostForm) > 0:
+                            filteredMessage = [ s for s in message if "Cookie: navigate-user=" in s]
+                            if len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
+                                resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}" 
+                                writeLog(resultStr)
+                                print(resultStr)
+                                
                         # server respone
-                        filterResponse = [s for s in message if "HTTP/1.1 200 OK" in s]
-                        filterErrorResponse = [s for s in message if "HTTP/1.1 302 Found"]
+                        filterResponse = [s for s in message if "HTTP/1.1 302 Found" in s]
+                        filterErrorResponse = [s for s in message if "Login incorrect."in s]
                         if tempData is not None and len(filterErrorResponse) > 0:
                             tempData.fail += 1
+                            resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} time(s) and fail {tempData.fail} time(s) stared at {tempData.startTime}" 
+                            writeLog(resultStr)
+                            print(resultStr)
+                        
                         elif tempData is not None and len(filterResponse) > 0:
-                            print(f"Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempData.attempt} stared in {tempData.startTime}" )
+                            resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} stared at {tempData.startTime} succeed login to the system"
+                            writeLog(resultStr)
+                            print(resultStr)
+                            tempData.succedTime = newTime
+                            tempData.succedAttempt += 1
                             identifiedIP.append(tempData)
                             suspectIP.remove(tempData)
-                        # elif tempData is not None and tempData.fail <= 10 and message[0] == '230':
-                        #     identifiedIP.append(tempData)
-                        #     suspectIP.remove(tempData)
-    except Exception as e:
-            print(e)
-    finally:
-        csvfile.close()
-# thread_waitToStop = threading.Thread(target=waitToStop, args=())
-# thread_run = threading.Thread(target=analyze, args=())
-# thread_waitToStop.start()
-# thread_run.start()
+                        
+                        elif detectedData is not None and len(filterErrorResponse) > 0:
+                            detectedData.fail += 1
+                            resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}" 
+                            writeLog(resultStr)
+                            print(resultStr)
+                        
+                        elif detectedData is not None and len(filterResponse) > 0:
+                            detectedData.succedAttempt += 1
+                            resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} with SQL Injection again, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}" 
+                            writeLog(resultStr)
+                            print(resultStr)
 
-# thread_waitToStop.join()
-# thread_run.join()
-analyze()
-    # extractedData = []
-    # rawData = list(csv.reader(csvfile, delimiter=','))
-    # for row in rawData:
-    #     if len(row) > 5 and row[5] == "ftp":
-    #         extractedData.append(row)
-    # extractedData.sort(key=extractedData_sort)
-    # 
-    # 
+        except Exception as e:
+            print(e)
+        finally:
+            csvfile.close()
+thread_waitToStop = threading.Thread(target=waitToStop, args=())
+thread_run = threading.Thread(target=analyze, args=())
+thread_waitToStop.start()
+thread_run.start()
+
+thread_waitToStop.join()
+thread_run.join()
 
             
 
