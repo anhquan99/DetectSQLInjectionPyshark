@@ -102,15 +102,17 @@ def analyze():
                             elif len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
                                 tempData.attempt += 1
                         # server respone
-                        if tempData is not None and message[0] == '530':
+                        filterResponse = [s for s in message if "HTTP/1.1 200 OK" in s]
+                        filterErrorResponse = [s for s in message if "HTTP/1.1 302 Found"]
+                        if tempData is not None and len(filterErrorResponse) > 0:
                             tempData.fail += 1
-                        if tempData is not None and tempData.fail > 10  and time_delta(tempData.startTime, newTime) < 2:
-                            print(f"Detected {srcIP} brute force {destIP} attempted {tempData.attempt} stared in {tempData.startTime}" )
+                        elif tempData is not None and len(filterResponse) > 0:
+                            print(f"Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempData.attempt} stared in {tempData.startTime}" )
                             identifiedIP.append(tempData)
                             suspectIP.remove(tempData)
-                        elif tempData is not None and tempData.fail <= 10 and message[0] == '230':
-                            identifiedIP.append(tempData)
-                            suspectIP.remove(tempData)
+                        # elif tempData is not None and tempData.fail <= 10 and message[0] == '230':
+                        #     identifiedIP.append(tempData)
+                        #     suspectIP.remove(tempData)
     except Exception as e:
             print(e)
     finally:
