@@ -1,6 +1,10 @@
 import pandas
+import re
 
-pdf = pandas.read_csv("ResultDirectCapture.csv", header=None)
-temp = pdf.itertuples(index = True, name = None)
-for i in pdf.index:
-    print(i)
+temp = 'Cookie: navigate-user=\"" OR TRUE--%20\r\n'
+# black_list = "['OR 1 == 1', 'OR TRUE', '\', '""']"
+
+
+for i in black_list:
+    result = re.match(i, temp)
+    print(result)
