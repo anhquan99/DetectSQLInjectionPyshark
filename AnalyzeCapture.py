@@ -3,6 +3,7 @@ import time
 import datetime
 import threading
 import re
+from urllib.parse import unquote
 
 stop_threads = False
 black_list = [ "(?i)(.*)(\\b)+(OR|AND)(\\s)+(true|false)(\\s)*(.*)",
@@ -78,7 +79,7 @@ def analyze():
             identifiedIP = []
             global stop_threads
             while not stop_threads:
-                row = csvfile.readline().split(';')
+                row = unquote(csvfile.readline()).split(';')
                 if not row:
                     time.sleep(0.5) 
                 else:
@@ -111,13 +112,14 @@ def analyze():
 
                             elif len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
                                 tempData.attempt += 1
-                                resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempData.attempt}, fail {detectedData.fail} time(s) stared at {tempData.startTime}"
+                                resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempData.attempt}, fail {tempData.fail} time(s) stared at {tempData.startTime}"
                                 writeLog(resultStr)
                                 print(resultStr)
                         
                         elif destPort == '80' and detectedData is not None and len(filteredPostForm) > 0:
                             filteredMessage = [ s for s in message if "Cookie: navigate-user=" in s]
                             if len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
+                                detectedData.attempt += 1
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}" 
                                 writeLog(resultStr)
                                 print(resultStr)

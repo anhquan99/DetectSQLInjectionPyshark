@@ -1,6 +1,0 @@
-[Nov 21 2021 01:24:35.491601000]: Detected 192.168.111.132 attacked 192.168.111.136 with SQL Injection, attempted 1 stared at Nov 21 2021 01:24:35.491601000
-[Nov 21 2021 01:23:34.505813000]: Detected 192.168.111.132 succed to attack 192.168.111.136 with SQL Injection, attempted 1 stared at Nov 21 2021 01:24:35.491601000 succeed login to the system
-[Nov 21 2021 01:23:34.503289000]: Detected 192.168.111.132 attacked 192.168.111.136 with SQL Injection, attempted 1 time(s), fail 0 time(s), succed 1 times, stared at Nov 21 2021 01:24:35.491601000 and succed at Nov 21 2021 01:23:34.505813000
-[Nov 21 2021 01:24:35.496842000]: Detected 192.168.111.132 succed to attack 192.168.111.136 with SQL Injection again, attempted 1 time(s), fail 0 time(s), succed 2 times, stared at Nov 21 2021 01:24:35.491601000 and succed at Nov 21 2021 01:23:34.505813000
-[Nov 22 2021 01:10:01.356495000]: Detected 192.168.111.132 attacked 192.168.111.136 with SQL Injection, attempted 1 stared at Nov 22 2021 01:10:01.356495000
-[Nov 22 2021 01:10:01.360371000]: Detected 192.168.111.132 succed to attack 192.168.111.136 with SQL Injection, attempted 1 stared at Nov 22 2021 01:10:01.356495000 succeed login to the system
