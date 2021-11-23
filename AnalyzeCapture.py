@@ -6,26 +6,28 @@ import re
 from urllib.parse import unquote
 
 stop_threads = False
-black_list = [ "(?i)(.*)(\\b)+(OR|AND)(\\s)+(true|false)(\\s)*(.*)",
-            "(?i)(.*)(\\b)+(OR|AND)(\\s)+(\\w)(\\s)*(\\=)(\\s)*(\\w)(\\s)*(.*)",
-            "(?i)(.*)(\\b)+(OR|AND)(\\s)+(equals|not equals)(\\s)+(true|false)(\\s)*(.*)",
-            "(?i)(.*)(\\b)+(OR|AND)(\\s)+([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(\\=)(\\s)*([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(.*)",
-            "(?i)(.*)(\\b)+(OR|AND)(\\s)+([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(\\!\\=)(\\s)*([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(.*)",
-            "(?i)(.*)(\\b)+(OR|AND)(\\s)+([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(\\<\\>)(\\s)*([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(.*)",
-            "(?i)(.*)(\\b)+SELECT(\\b)+\\s.*(\\b)(.*)",
-            "(?i)(.*)(\\b)+INSERT(\\b)+\\s.*(\\b)+INTO(\\b)+\\s.*(.*)",
-            "(?i)(.*)(\\b)+UPDATE(\\b)+\\s.*(.*)",
-            "(?i)(.*)(\\b)+DELETE(\\b)+\\s.*(\\b)+FROM(\\b)+\\s.*(.*)",
-            "(?i)(.*)(\\b)+UPSERT(\\b)+\\s.*(.*)",
-            "(?i)(.*)(\\b)+SAVEPOINT(\\b)+\\s.*(.*)",
-            "(?i)(.*)(\\b)+CALL(\\b)+\\s.*(.*)",
-            "(?i)(.*)(\\b)+ROLLBACK(\\b)+\\s.*(.*)",
-            "(?i)(.*)(\\b)+KILL(\\b)+\\s.*(.*)",
-            "(?i)(.*)(\\b)+DROP(\\b)+\\s.*(.*)",
-            "(?i)(.*)(\\b)+DESC(\\b)+(\\w)*\\s.*(.*)",
-            "(?i)(.*)(\\b)+DESCRIBE(\\b)+(\\w)*\\s.*(.*)",
-            "(.*)(/\\*|\\*/|;){1,}(.*)",
-            "(.*)(-){2,}(.*)",]
+black_list = ["(?i)(.*)(\\b)+(OR|AND)(\\s)+(true|false)(\\s)*(.*)",
+              "(?i)(.*)(\\b)+(OR|AND)(\\s)+(\\w)(\\s)*(\\=)(\\s)*(\\w)(\\s)*(.*)",
+              "(?i)(.*)(\\b)+(OR|AND)(\\s)+(equals|not equals)(\\s)+(true|false)(\\s)*(.*)",
+              "(?i)(.*)(\\b)+(OR|AND)(\\s)+([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(\\=)(\\s)*([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(.*)",
+              "(?i)(.*)(\\b)+(OR|AND)(\\s)+([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(\\!\\=)(\\s)*([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(.*)",
+              "(?i)(.*)(\\b)+(OR|AND)(\\s)+([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(\\<\\>)(\\s)*([0-9A-Za-z_'][0-9A-Za-z\\d_']*)(\\s)*(.*)",
+              "(?i)(.*)(\\b)+SELECT(\\b)+\\s.*(\\b)(.*)",
+              "(?i)(.*)(\\b)+INSERT(\\b)+\\s.*(\\b)+INTO(\\b)+\\s.*(.*)",
+              "(?i)(.*)(\\b)+UPDATE(\\b)+\\s.*(.*)",
+              "(?i)(.*)(\\b)+DELETE(\\b)+\\s.*(\\b)+FROM(\\b)+\\s.*(.*)",
+              "(?i)(.*)(\\b)+UPSERT(\\b)+\\s.*(.*)",
+              "(?i)(.*)(\\b)+SAVEPOINT(\\b)+\\s.*(.*)",
+              "(?i)(.*)(\\b)+CALL(\\b)+\\s.*(.*)",
+              "(?i)(.*)(\\b)+ROLLBACK(\\b)+\\s.*(.*)",
+              "(?i)(.*)(\\b)+KILL(\\b)+\\s.*(.*)",
+              "(?i)(.*)(\\b)+DROP(\\b)+\\s.*(.*)",
+              "(?i)(.*)(\\b)+DESC(\\b)+(\\w)*\\s.*(.*)",
+              "(?i)(.*)(\\b)+DESCRIBE(\\b)+(\\w)*\\s.*(.*)",
+              "(.*)(/\\*|\\*/|;){1,}(.*)",
+              "(.*)(-){2,}(.*)", ]
+
+
 class requestIP:
     def __init__(self):
         self.srcIP = ''
@@ -35,53 +37,69 @@ class requestIP:
         self.startTime = ''
         self.succedTime = ''
         self.succedAttempt = 0
+
+
 def extractedData_sort(t):
     return t[0]
+
+
 def myPrint(t):
     for i in t:
         print(i.srcIP)
         print(i.destIP)
         print(i.attempt)
         print(i.fail)
+
+
 def findSuspect(srcIP, destIP, suspectList):
     for i in suspectList:
         if (srcIP == i.srcIP and destIP == i.destIP) or (srcIP == i.destIP and destIP == i.srcIP):
             return i
     return None
+
+
 def waitToStop():
     input()
     global stop_threads
-    stop_threads = True 
+    stop_threads = True
+
+
 def time_delta(startTime, newTime):
     startTimeSplit = startTime.split(' ')
     newTimeSplit = newTime.split(' ')
     if startTimeSplit[0] == newTimeSplit[0] and startTimeSplit[1] == newTimeSplit[1] and startTimeSplit[2] == newTimeSplit[2] and startTimeSplit[4] == newTimeSplit[4]:
         hourStart = startTimeSplit[3].split(':')
         hourNew = newTimeSplit[3].split(':')
-        return ( float(hourNew[0]) - float(hourStart[0]))*3600 + (float(hourNew[1]) - float(hourStart[1]))*60 + (float(hourNew[2]) - float(hourStart[2]))
+        return (float(hourNew[0]) - float(hourStart[0]))*3600 + (float(hourNew[1]) - float(hourStart[1]))*60 + (float(hourNew[2]) - float(hourStart[2]))
     else:
         return None
+
+
 def isSqlInjection(data):
     for i in black_list:
         result = re.match(i, data)
         if result != None:
             return True
     return False
+
+
 def writeLog(data):
-    log = open('log.txt','a')
+    log = open('log.txt', 'a')
     log.write(data)
     log.write('\n')
     log.close()
+
+
 def analyze():
     with open('ResultDirectCapture.csv', newline='', encoding='UTF8') as csvfile:
-        try:
-            suspectIP = []
-            identifiedIP = []
-            global stop_threads
-            while not stop_threads:
+        suspectIP = []
+        identifiedIP = []
+        global stop_threads
+        while not stop_threads:
+            try:
                 row = unquote(csvfile.readline()).split(';')
                 if not row:
-                    time.sleep(0.5) 
+                    time.sleep(0.5)
                 else:
                     if len(row) > 5 and row[5].lower() == "http":
                         srcIP = row[2]
@@ -89,17 +107,19 @@ def analyze():
 
                         destIP = row[1]
                         destPort = row[4]
-                        
+
                         newTime = row[0].split(' ')
                         newTime = ' '.join(newTime[0:4]).replace(',', '')
 
                         message = row[len(row)-1].split("\\n")
-                        tempData = findSuspect(srcIP, destIP, suspectIP) 
-                        detectedData = findSuspect(srcIP, destIP, identifiedIP)  
-                        filteredPostForm = [ s for s in message if "POST /navigate/login.php HTTP/1.1" in s]
-                        # attacker tan cong 
+                        tempData = findSuspect(srcIP, destIP, suspectIP)
+                        detectedData = findSuspect(srcIP, destIP, identifiedIP)
+                        filteredPostForm = [
+                            s for s in message if "POST /navigate/login.php HTTP/1.1" in s]
+                        # attacker tan cong
                         if destPort == '80' and detectedData is None and len(filteredPostForm) > 0:
-                            filteredMessage = [ s for s in message if "Cookie: navigate-user=" in s]
+                            filteredMessage = [
+                                s for s in message if "Cookie: navigate-user=" in s]
                             if tempData is None and len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
                                 tempRequest = requestIP()
                                 tempRequest.srcIP = srcIP
@@ -115,24 +135,27 @@ def analyze():
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempData.attempt}, fail {tempData.fail} time(s) stared at {tempData.startTime}"
                                 writeLog(resultStr)
                                 print(resultStr)
-                        
+
                         elif destPort == '80' and detectedData is not None and len(filteredPostForm) > 0:
-                            filteredMessage = [ s for s in message if "Cookie: navigate-user=" in s]
+                            filteredMessage = [
+                                s for s in message if "Cookie: navigate-user=" in s]
                             if len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
                                 detectedData.attempt += 1
-                                resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}" 
+                                resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
                                 writeLog(resultStr)
                                 print(resultStr)
-                                
+
                         # server respone
-                        filterResponse = [s for s in message if "HTTP/1.1 302 Found" in s]
-                        filterErrorResponse = [s for s in message if "Login incorrect."in s]
+                        filterResponse = [
+                            s for s in message if "HTTP/1.1 302 Found" in s]
+                        filterErrorResponse = [
+                            s for s in message if "Login incorrect." in s]
                         if tempData is not None and len(filterErrorResponse) > 0:
                             tempData.fail += 1
-                            resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} time(s) and fail {tempData.fail} time(s) stared at {tempData.startTime}" 
+                            resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} time(s) and fail {tempData.fail} time(s) stared at {tempData.startTime}"
                             writeLog(resultStr)
                             print(resultStr)
-                        
+
                         elif tempData is not None and len(filterResponse) > 0:
                             resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} stared at {tempData.startTime} succeed login to the system"
                             writeLog(resultStr)
@@ -141,23 +164,25 @@ def analyze():
                             tempData.succedAttempt += 1
                             identifiedIP.append(tempData)
                             suspectIP.remove(tempData)
-                        
+
                         elif detectedData is not None and len(filterErrorResponse) > 0:
                             detectedData.fail += 1
-                            resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}" 
-                            writeLog(resultStr)
-                            print(resultStr)
-                        
-                        elif detectedData is not None and len(filterResponse) > 0:
-                            detectedData.succedAttempt += 1
-                            resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} with SQL Injection again, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}" 
+                            resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
                             writeLog(resultStr)
                             print(resultStr)
 
-        except Exception as e:
-            print(e)
-        finally:
-            csvfile.close()
+                        elif detectedData is not None and len(filterResponse) > 0:
+                            detectedData.succedAttempt += 1
+                            resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} with SQL Injection again, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
+                            writeLog(resultStr)
+                            print(resultStr)
+
+            except Exception as e:
+                print(e)
+        csvfile.close()
+        
+
+
 thread_waitToStop = threading.Thread(target=waitToStop, args=())
 thread_run = threading.Thread(target=analyze, args=())
 thread_waitToStop.start()
@@ -165,11 +190,3 @@ thread_run.start()
 
 thread_waitToStop.join()
 thread_run.join()
-
-            
-
-        
-
-
-
-
