@@ -44,8 +44,7 @@ def getFlag(pck):
     return ', '.join(flags)
 def capture(user_interface):
     try:
-        # cap = pyshark.LiveCapture(interface=user_interface)    
-        cap = pyshark.LiveCapture(interface="VMware")    
+        cap = pyshark.LiveCapture(interface=user_interface)    
         for packet in cap.sniff_continuously():
             writePacket(packet)
             global stop_threads
@@ -117,11 +116,10 @@ def run(user_interface):
 
     except Exception as e:
         print(e)
-# if len(sys.argv) < 2 :
-#     print("Usage: DirectCapture.py [interface]")
-# elif sys.argv[1] == '-h' or sys.argv[1] == 'help':
-#     print("Usage: DirectCapture.py [interface]")
-# else:
-    # print(sys.argv[1])
-    # run(sys.argv[1])
-run("tempt")
+if len(sys.argv) < 2 :
+    print("Usage: DirectCapture.py [interface]")
+elif sys.argv[1] == '-h' or sys.argv[1] == 'help':
+    print("Usage: DirectCapture.py [interface]")
+else:
+    print(sys.argv[1])
+    run(sys.argv[1])

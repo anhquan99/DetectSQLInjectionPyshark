@@ -4,6 +4,7 @@ import datetime
 import threading
 import re
 from urllib.parse import unquote
+import os
 
 stop_threads = False
 black_list = ["(?i)(.*)(\\b)+(OR|AND)(\\s)+(true|false)(\\s)*(.*)",
@@ -88,9 +89,12 @@ def writeLog(data):
     log.write(data)
     log.write('\n')
     log.close()
-
+def deleteLog():
+    if os.path.exists("log.txt"):
+        os.remove("log.txt")
 
 def analyze():
+    deleteLog()
     with open('ResultDirectCapture.csv', newline='', encoding='UTF8') as csvfile:
         suspectIP = []
         identifiedIP = []
