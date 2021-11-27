@@ -18,6 +18,8 @@ def getInfo(pck):
             return '{0} > {1} [{2}] Seq={3} Ack={4} Win={5} LEN={6}'.format(pck.layers[2].dstport, pck.layers[2].srcport, getFlag(pck), pck.layers[2].seq, pck.layers[2].ack, pck.layers[2].window_size, pck.layers[2].len)
         else:
             return '{0} > {1} [{2}] Seq={3} Win={4} LEN={5}'.format(pck.layers[2].port, pck.layers[2].srcport, getFlag(pck), pck.layers[2].seq, pck.layers[2].window_size, pck.layers[2].len)
+    elif pck.highest_layer == 'DATA-TEXT-LINES':
+        return str(pck.layers[-2])
     else:
             return str(pck.layers[-1])
 
@@ -85,7 +87,7 @@ def writePacket(packet):
                     row.append(str(packet[packet.transport_layer].dstport))
                 else:
                     row.append("None")
-            if x[len(x)-1] != 'data' :
+            if x[len(x)-1] != 'data' and x[len(x)-1] != 'data-text-lines' :
                     row.append(x[len(x)-1])
             else:
                 row.append(x[len(x)-2])

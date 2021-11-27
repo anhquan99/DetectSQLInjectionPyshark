@@ -38,8 +38,8 @@ class requestIP:
         self.startTime = ''
         self.succedTime = ''
         self.succedAttempt = 0
-
-
+        self.exploitTime = ''
+        self.uploadedMaliciousFile = False
 def extractedData_sort(t):
     return t[0]
 
@@ -89,9 +89,12 @@ def writeLog(data):
     log.write(data)
     log.write('\n')
     log.close()
+
+
 def deleteLog():
     if os.path.exists("log.txt"):
         os.remove("log.txt")
+
 
 def analyze():
     deleteLog()
@@ -104,23 +107,25 @@ def analyze():
                 row = unquote(csvfile.readline()).split(';')
                 if not row:
                     time.sleep(0.5)
-                else:
-                    if len(row) > 5 and row[5].lower() == "http":
-                        srcIP = row[2]
-                        srcPort = row[3]
+                elif len(row) > 5 :
+                    srcIP = row[2]
+                    srcPort = row[3]
 
-                        destIP = row[1]
-                        destPort = row[4]
+                    destIP = row[1]
+                    destPort = row[4]
 
-                        newTime = row[0].split(' ')
-                        newTime = ' '.join(newTime[0:4]).replace(',', '')
+                    newTime = row[0].split(' ')
+                    newTime = ' '.join(newTime[0:4]).replace(',', '')
 
-                        message = row[len(row)-1].split("\\n")
-                        tempData = findSuspect(srcIP, destIP, suspectIP)
-                        detectedData = findSuspect(srcIP, destIP, identifiedIP)
+                    message = row[len(row)-1].split("\\n")
+                    tempData = findSuspect(srcIP, destIP, suspectIP)
+                    detectedData = findSuspect(srcIP, destIP, identifiedIP)
+
+                    if row[5].lower() == "http":
+
+                        # attacker tan cong
                         filteredPostForm = [
                             s for s in message if "POST /navigate/login.php HTTP/1.1" in s]
-                        # attacker tan cong
                         if destPort == '80' and detectedData is None and len(filteredPostForm) > 0:
                             filteredMessage = [
                                 s for s in message if "Cookie: navigate-user=" in s]
@@ -133,12 +138,14 @@ def analyze():
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempRequest.attempt} stared at {tempRequest.startTime}"
                                 writeLog(resultStr)
                                 print(resultStr)
+                                continue
 
                             elif len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
                                 tempData.attempt += 1
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempData.attempt}, fail {tempData.fail} time(s) stared at {tempData.startTime}"
                                 writeLog(resultStr)
                                 print(resultStr)
+                                continue
 
                         elif destPort == '80' and detectedData is not None and len(filteredPostForm) > 0:
                             filteredMessage = [
@@ -148,17 +155,22 @@ def analyze():
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
                                 writeLog(resultStr)
                                 print(resultStr)
+                                continue
 
                         # server respone
                         filterResponse = [
                             s for s in message if "HTTP/1.1 302 Found" in s]
                         filterErrorResponse = [
-                            s for s in message if "Login incorrect." in s]
+                            s for s in message if "HTTP/1.1 200 OK" in s]
+                        filteredFileUpload = []
+                        if len([s for s in message if "HTTP/1.1 200 OK" in s ]) > 0 and len([s for s in message if "/navigate/navigate_upload.php" in s ]) > 0:
+                            filteredFileUpload = ["HTTP/1.1 200 OK" , "/navigate/navigate_upload.php" ]
                         if tempData is not None and len(filterErrorResponse) > 0:
                             tempData.fail += 1
                             resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} time(s) and fail {tempData.fail} time(s) stared at {tempData.startTime}"
                             writeLog(resultStr)
                             print(resultStr)
+                            continue
 
                         elif tempData is not None and len(filterResponse) > 0:
                             resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} stared at {tempData.startTime} succeed login to the system"
@@ -168,23 +180,57 @@ def analyze():
                             tempData.succedAttempt += 1
                             identifiedIP.append(tempData)
                             suspectIP.remove(tempData)
+                            continue
 
                         elif detectedData is not None and len(filterErrorResponse) > 0:
                             detectedData.fail += 1
                             resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
                             writeLog(resultStr)
                             print(resultStr)
+                            continue
 
                         elif detectedData is not None and len(filterResponse) > 0:
                             detectedData.succedAttempt += 1
                             resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} with SQL Injection again, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
                             writeLog(resultStr)
                             print(resultStr)
-
+                            continue
+                        elif detectedData is not None and detectedData.uploadedMaliciousFile == True and len(filteredFileUpload) > 0:
+                            detectedData.exploitTime = newTime
+                            resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} by uploading malicious file, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
+                            writeLog(resultStr)
+                            print(resultStr)
+                    elif row[5].lower() == "tcp":
+                        if detectedData is not None and detectedData.exploitTime != '':
+                            filterExitConnect = [ s for s in message if "RST" in s ]
+                            if detectedData.srcIP == srcIP and len(filterExitConnect) == 0:
+                                resultStr = f"[{newTime}]: Detected {srcIP} is exploiting {destIP} stared at {detectedData.exploitTime} "
+                                writeLog(resultStr)
+                                print(resultStr)
+                                continue
+                            elif detectedData.destIP == srcIP and len(filterExitConnect) == 0:
+                                resultStr = f"[{newTime}]: Detected {srcIP} response to exploit query from {destIP} stared at {detectedData.exploitTime} "
+                                writeLog(resultStr)
+                                print(resultStr)
+                                continue
+                            elif len(filterExitConnect) > 0:
+                                resultStr = f"[{newTime}]: Detected {srcIP} stop exploiting {destIP} stared at {detectedData.exploitTime} "
+                                identifiedIP.remove(detectedData)
+                                writeLog(resultStr)
+                                print(resultStr)
+                                continue
+                    elif row[5].lower() == "media":
+                        maliciousFileUpload = [
+                            s for s in message if "Type: multipart/form-data" in s]
+                        if detectedData is not None and len(maliciousFileUpload) > 0:
+                                detectedData.uploadedMaliciousFile = True
+                                resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} by uploading malicious file, attempted {detectedData.attempt}, fail {detectedData.fail} time(s) stared at {detectedData.startTime}"
+                                writeLog(resultStr)
+                                print(resultStr)
+                                continue
             except Exception as e:
                 print(e)
         csvfile.close()
-        
 
 
 thread_waitToStop = threading.Thread(target=waitToStop, args=())
