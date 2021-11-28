@@ -160,11 +160,12 @@ def analyze():
                         # server respone
                         filterResponse = [
                             s for s in message if "HTTP/1.1 302 Found" in s]
-                        filterErrorResponse = [
-                            s for s in message if "HTTP/1.1 200 OK" in s]
+                        filterErrorResponse = []
                         filteredFileUpload = []
                         if len([s for s in message if "HTTP/1.1 200 OK" in s ]) > 0 and len([s for s in message if "/navigate/navigate_upload.php" in s ]) > 0:
                             filteredFileUpload = ["HTTP/1.1 200 OK" , "/navigate/navigate_upload.php" ]
+                        elif len([s for s in message if "HTTP/1.1 200 OK" in s ]) > 0 and len([s for s in message if "/navigate/navigate_upload.php" in s ]) == 0:
+                            filterErrorResponse = ["HTTP/1.1 200 OK" ]
                         if tempData is not None and len(filterErrorResponse) > 0:
                             tempData.fail += 1
                             resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} time(s) and fail {tempData.fail} time(s) stared at {tempData.startTime}"
