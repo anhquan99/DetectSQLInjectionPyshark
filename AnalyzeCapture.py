@@ -29,6 +29,13 @@ black_list = ["(?i)(.*)(\\b)+(OR|AND)(\\s)+(true|false)(\\s)*(.*)",
               "(.*)(-){2,}(.*)", ]
 
 
+class color:
+    CEND = '\33[0m'
+    CRED = '\33[31m'
+    CGREEN = '\33[32m'
+    CYELLOW = '\33[33m'
+
+
 class requestIP:
     def __init__(self):
         self.srcIP = ''
@@ -40,6 +47,8 @@ class requestIP:
         self.succedAttempt = 0
         self.exploitTime = ''
         self.uploadedMaliciousFile = False
+
+
 def extractedData_sort(t):
     return t[0]
 
@@ -107,7 +116,7 @@ def analyze():
                 row = unquote(csvfile.readline()).split(';')
                 if not row:
                     time.sleep(0.5)
-                elif len(row) > 5 :
+                elif len(row) > 5:
                     srcIP = row[2]
                     srcPort = row[3]
 
@@ -137,14 +146,14 @@ def analyze():
                                 suspectIP.append(tempRequest)
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempRequest.attempt} stared at {tempRequest.startTime}"
                                 writeLog(resultStr)
-                                print(resultStr)
+                                print(color.CYELLOW + resultStr + color.CEND)
                                 continue
 
                             elif len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
                                 tempData.attempt += 1
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempData.attempt}, fail {tempData.fail} time(s) stared at {tempData.startTime}"
                                 writeLog(resultStr)
-                                print(resultStr)
+                                print(color.CYELLOW + resultStr + color.CEND)
                                 continue
 
                         elif destPort == '80' and detectedData is not None and len(filteredPostForm) > 0:
@@ -154,7 +163,7 @@ def analyze():
                                 detectedData.attempt += 1
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
                                 writeLog(resultStr)
-                                print(resultStr)
+                                print(color.CYELLOW + resultStr + color.CEND)
                                 continue
 
                         # server respone
@@ -162,21 +171,22 @@ def analyze():
                             s for s in message if "HTTP/1.1 302 Found" in s]
                         filterErrorResponse = []
                         filteredFileUpload = []
-                        if len([s for s in message if "HTTP/1.1 200 OK" in s ]) > 0 and len([s for s in message if "/navigate/navigate_upload.php" in s ]) > 0:
-                            filteredFileUpload = ["HTTP/1.1 200 OK" , "/navigate/navigate_upload.php" ]
-                        elif len([s for s in message if "HTTP/1.1 200 OK" in s ]) > 0 and len([s for s in message if "/navigate/navigate_upload.php" in s ]) == 0:
-                            filterErrorResponse = ["HTTP/1.1 200 OK" ]
+                        if len([s for s in message if "HTTP/1.1 200 OK" in s]) > 0 and len([s for s in message if "/navigate/navigate_upload.php" in s]) > 0:
+                            filteredFileUpload = [
+                                "HTTP/1.1 200 OK", "/navigate/navigate_upload.php"]
+                        elif len([s for s in message if "HTTP/1.1 200 OK" in s]) > 0 and len([s for s in message if "/navigate/navigate_upload.php" in s]) == 0:
+                            filterErrorResponse = ["HTTP/1.1 200 OK"]
                         if tempData is not None and len(filterErrorResponse) > 0:
                             tempData.fail += 1
                             resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} time(s) and fail {tempData.fail} time(s) stared at {tempData.startTime}"
                             writeLog(resultStr)
-                            print(resultStr)
+                            print(color.CGREEN + resultStr + color.CEND)
                             continue
 
                         elif tempData is not None and len(filterResponse) > 0:
                             resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} with SQL Injection, attempted {tempData.attempt} stared at {tempData.startTime} succeed login to the system"
                             writeLog(resultStr)
-                            print(resultStr)
+                            print(color.CRED + resultStr + color.CEND)
                             tempData.succedTime = newTime
                             tempData.succedAttempt += 1
                             identifiedIP.append(tempData)
@@ -187,48 +197,49 @@ def analyze():
                             detectedData.fail += 1
                             resultStr = f"[{newTime}]: Detected {destIP} failed to attack {srcIP} with SQL Injection, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
                             writeLog(resultStr)
-                            print(resultStr)
+                            print(color.CYELLOW + resultStr + color.CEND)
                             continue
 
                         elif detectedData is not None and len(filterResponse) > 0:
                             detectedData.succedAttempt += 1
                             resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} with SQL Injection again, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
                             writeLog(resultStr)
-                            print(resultStr)
+                            print(color.CRED + resultStr + color.CEND)
                             continue
                         elif detectedData is not None and detectedData.uploadedMaliciousFile == True and len(filteredFileUpload) > 0:
                             detectedData.exploitTime = newTime
                             resultStr = f"[{newTime}]: Detected {destIP} succed to attack {srcIP} by uploading malicious file, attempted {detectedData.attempt} time(s), fail {detectedData.fail} time(s), succed {detectedData.succedAttempt} times, stared at {detectedData.startTime} and succed at {detectedData.succedTime}"
-                            writeLog(resultStr)
-                            print(resultStr)
+                            writeLog( resultStr)
+                            print(color.CRED + resultStr + color.CEND)
                     elif row[5].lower() == "tcp":
                         if detectedData is not None and detectedData.exploitTime != '':
-                            filterExitConnect = [ s for s in message if "RST" in s ]
+                            filterExitConnect = [
+                                s for s in message if "RST" in s]
                             if detectedData.srcIP == srcIP and len(filterExitConnect) == 0:
                                 resultStr = f"[{newTime}]: Detected {srcIP} is exploiting {destIP} stared at {detectedData.exploitTime} "
                                 writeLog(resultStr)
-                                print(resultStr)
+                                print(color.CYELLOW + resultStr + color.CEND)
                                 continue
                             elif detectedData.destIP == srcIP and len(filterExitConnect) == 0:
                                 resultStr = f"[{newTime}]: Detected {srcIP} response to exploit query from {destIP} stared at {detectedData.exploitTime} "
                                 writeLog(resultStr)
-                                print(resultStr)
+                                print(color.CYELLOW + resultStr + color.CEND)
                                 continue
                             elif len(filterExitConnect) > 0:
                                 resultStr = f"[{newTime}]: Detected {srcIP} stop exploiting {destIP} stared at {detectedData.exploitTime} "
                                 identifiedIP.remove(detectedData)
                                 writeLog(resultStr)
-                                print(resultStr)
+                                print(color.CGREEN + resultStr+ color.CEND) 
                                 continue
                     elif row[5].lower() == "media":
                         maliciousFileUpload = [
                             s for s in message if "Type: multipart/form-data" in s]
                         if detectedData is not None and len(maliciousFileUpload) > 0:
-                                detectedData.uploadedMaliciousFile = True
-                                resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} by uploading malicious file, attempted {detectedData.attempt}, fail {detectedData.fail} time(s) stared at {detectedData.startTime}"
-                                writeLog(resultStr)
-                                print(resultStr)
-                                continue
+                            detectedData.uploadedMaliciousFile = True
+                            resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} by uploading malicious file, attempted {detectedData.attempt}, fail {detectedData.fail} time(s) stared at {detectedData.startTime}"
+                            writeLog(resultStr)
+                            print(color.CYELLOW +  resultStr + color.CEND)
+                            continue
             except Exception as e:
                 print(e)
         csvfile.close()
