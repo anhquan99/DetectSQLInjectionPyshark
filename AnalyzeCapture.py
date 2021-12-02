@@ -34,6 +34,7 @@ class color:
     CRED = '\33[31m'
     CGREEN = '\33[32m'
     CYELLOW = '\33[33m'
+    CVIOLET = '\33[35m'
 
 
 class requestIP:
@@ -146,14 +147,14 @@ def analyze():
                                 suspectIP.append(tempRequest)
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempRequest.attempt} stared at {tempRequest.startTime}"
                                 writeLog(resultStr)
-                                print(color.CYELLOW + resultStr + color.CEND)
+                                print(color.CVIOLET + resultStr + color.CEND)
                                 continue
 
                             elif len(filteredMessage) > 0 and isSqlInjection(filteredMessage[0]):
                                 tempData.attempt += 1
                                 resultStr = f"[{newTime}]: Detected {srcIP} attacked {destIP} with SQL Injection, attempted {tempData.attempt}, fail {tempData.fail} time(s) stared at {tempData.startTime}"
                                 writeLog(resultStr)
-                                print(color.CYELLOW + resultStr + color.CEND)
+                                print(color.CEND + resultStr + color.CEND)
                                 continue
 
                         elif destPort == '80' and detectedData is not None and len(filteredPostForm) > 0:
