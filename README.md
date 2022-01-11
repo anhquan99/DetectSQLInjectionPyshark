@@ -14,7 +14,7 @@
 
 ## General
 
-- School project for detecting and alert to the user when navigate is attacked with sql injection based on CVE-2018-17552.
+- Project for detecting and alert to the user when navigate is attacked with sql injection based on CVE-2018-17552.
 
 ## Technologies used
 
